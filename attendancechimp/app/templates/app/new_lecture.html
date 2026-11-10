@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sign Up – AttendanceChimp</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin: 40px; }
+        form { display: inline-block; text-align: left; }
+        label { display: block; margin-top: 10px; }
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 300px; padding: 5px;
+        }
+    </style>
+</head>
+<body>
+<h1>New Lecture</h1>
+<form action="/app/createLecture" method="post">
+    <label> Course: </label>
+    <select name="choice" required>
+        {% for course in courses %}
+            <option value="{{ course.name }}">{{ course.name }}</option>
+        {% endfor %}
+    </select><br>
+    <button type="submit">Create Lecture</button>
+</form>
+</body>
+</html>

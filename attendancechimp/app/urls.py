@@ -10,4 +10,11 @@ urlpatterns = [
     path('index.html', views.index, name='index_html'),
     path('new', views.new, name='new'),
     path('createUser', views.createUser, name='createUser'),
+    path('newCourse', views.new_course, name='newCourse'),
+    path('createCourse', views.create_course, name='createCourse'),
+    path('newLecture', views.new_lecture, name='newLecture'),
+    path('createLecture', views.create_lecture, name='createLecture'),
+    path('newQRUpload', views.new_qr_upload, name='newQRUpload'),
+    path('createQRUpload', views.create_qr_upload, name='createQRUpload'),
+    path('dumpUploads', views.dump_uploads, name='dumpUploads'),
 ]

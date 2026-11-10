@@ -15,6 +15,7 @@ from datetime import datetime
 import zoneinfo
 import json
 import io
+from django.views.decorators.http import require_GET, require_POST
 
 from .models import (InstructorProfile, StudentProfile, Course, Enrollment,
                      Lecture, QRCodeUpload, is_instructor, is_student)
@@ -100,3 +101,80 @@ def createUser(request):
         login(request, user)
     return HttpResponse("User created successfully", status=200)
 
+# ---------------------------------------------------------------------------
+# HW5  — courses, lectures, QR uploads, dump
+# ---------------------------------------------------------------------------
+
+def new_course(request):
+    """Display the form for creating a new course."""
+    return render(request, "app/new_course.html")
+
+@csrf_exempt
+@require_POST
+def create_course(request):
+    if not is_instructor(request.user):
+        return HttpResponse("Only instructors can create courses.", status = 401)
+
+    Course.objects.create(
+        instructor = request.user,
+        name = request.POST.get('course-name'),
+        start_time = request.POST.get('start-time'),
+        end_time = request.POST.get('end-time'),
+        day_mon = "day-mon" in request.POST,
+        day_tue = "day-tue" in request.POST,
+        day_wed = "day-wed" in request.POST,
+        day_thu = "day-thu" in request.POST,
+        day_fri = "day-fri" in request.POST,
+    )
+    return HttpResponse("Course created successfully!", status=200)
+
+def new_lecture(request):
+    """Display the form for creating a new lecture."""
+    return render(request, "app/new_lecture.html", {"courses": Course.objects.all()})
+
+
+@csrf_exempt
+@require_POST
+def create_lecture(request):
+    if not request.user.is_authenticated or not is_instructor(request.user):
+        return HttpResponse("Instructor login required.", status=401)
+
+    course_name = request.POST.get("choice", "")
+    course = Course.objects.filter(name=course_name).first()
+    if course is None:
+        return HttpResponse("Course not found.", status=400)
+
+    Lecture.objects.create(course=course)
+    return HttpResponse("Lecture created!", status=200)
+
+def new_qr_upload(request):
+    """Display the form for uploading a QR code image."""
+    return render(request, "app/new_qr_upload.html")
+
+@csrf_exempt
+@require_POST
+def create_qr_upload(request):
+    if not is_student(request.user):
+        return HttpResponse("Only students can upload QR codes.", status=401)
+
+    image = request.FILES.get("imageUpload")
+    if image is None:
+        return HttpResponse("No file uploaded.", status=400)
+
+    QRCodeUpload.objects.create(student=request.user, image=image)
+    return HttpResponse("Upload saved!", status=200)
+
+@require_GET
+def dump_uploads(request):
+    """Return a JSON dump of all QR code uploads."""
+    if not is_instructor(request.user):
+        return HttpResponse("Only instructors can view uploads.", status=401)
+
+    data = [
+        {
+            "username": upload.student.username,
+            "upload_time": upload.uploaded_at.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        for upload in QRCodeUpload.objects.all()
+    ]
+    return JsonResponse(data, safe=False)
