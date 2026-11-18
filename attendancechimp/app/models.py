@@ -21,6 +21,9 @@ from django.contrib.auth.models import User
 import logging
 import string
 import random
+from datetime import timezone as dt_timezone
+from zoneinfo import ZoneInfo
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
@@ -138,4 +141,24 @@ def is_instructor(user):
 def is_student(user):
     """Return True if the user has a StudentProfile."""
     return hasattr(user, 'student_profile')
+
+def getUploadsForCourse(course):
+    """Return all valid QRCodeUpload instances for a given course."""
+    c = Course.objects.filter(name=course).first()
+    if c is None:
+        return []
+    
+    uploads = QRCodeUpload.objects.filter(lecture__course=c)
+
+    good_uploads = []
+    for upload in uploads:
+        time = upload.uploaded_at
+        if timezone.is_naive(time):
+            time = time.replace(tzinfo=dt_timezone.utc)
+        chi = time.astimezone(ZoneInfo("America/Chicago"))
+        
+
+        if c.meets_on_day(chi.weekday()) and c.start_time <= chi.time() <= c.end_time:
+            good_uploads.append(upload)
+    return good_uploads
 

@@ -18,7 +18,7 @@ import io
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import (InstructorProfile, StudentProfile, Course, Enrollment,
-                     Lecture, QRCodeUpload, is_instructor, is_student)
+                     Lecture, QRCodeUpload, is_instructor, is_student, getUploadsForCourse)
 
 CDT = zoneinfo.ZoneInfo("America/Chicago")
 
@@ -176,5 +176,24 @@ def dump_uploads(request):
             "upload_time": upload.uploaded_at.strftime("%Y-%m-%d %H:%M:%S"),
         }
         for upload in QRCodeUpload.objects.all()
+    ]
+    return JsonResponse(data, safe=False)
+
+@require_GET
+def getUploads(request):
+    """Return a JSON dump of all valid QR code uploads for a given course."""
+    if not is_instructor(request.user):
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    course = request.GET.get("course")
+    if not course:
+        return JsonResponse({"error": "Missing course parameter"}, status=400)
+
+    data = [
+        {
+            "username": upload.student.username,
+            "upload_time": upload.uploaded_at.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        for upload in getUploadsForCourse(course)
     ]
     return JsonResponse(data, safe=False)
