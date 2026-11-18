@@ -68,6 +68,8 @@ class Course(models.Model):
 
     def meets_on_day(self, weekday_int):
         """Return True if the course meets on the given weekday (0=Mon)."""
+        if weekday_int > 4:
+            return False
         return [self.day_mon, self.day_tue, self.day_wed,
                 self.day_thu, self.day_fri][weekday_int]
 
